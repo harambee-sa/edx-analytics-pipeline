@@ -1,10 +1,10 @@
-Jinja2==2.7.3		# BSD
+Jinja2==2.8		    # BSD
 MarkupSafe==0.23	# BSD
-PyYAML==3.10		# MIT License
-ecdsa==0.11 		# MIT
+PyYAML==3.11		  # MIT License
+ecdsa==0.11       # MIT
 httplib2==0.9 		# MIT
-paramiko==1.14.0 	# LGPL
+paramiko==1.16.0 	# LGPL
 pycrypto==2.6.1 	# public domain
-ansible==1.4.5          # GPL v3 License
-boto==2.22.1            # MIT
+ansible==1.9.1    # GPL v3 License
+boto==2.39.0      # MIT
 
