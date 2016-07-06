@@ -12,7 +12,7 @@ from edx.analytics.tasks.util import eventlog
 
 log = logging.getLogger(__name__)
 
-SUBSECTION_PATTERN = r'/courses/[^/+]+(/|\+)[^/+]+(/|\+)[^/]+/courseware$'
+SUBSECTION_PATTERN = r'/courses/[^/+]+(/|\+)[^/+]+(/|\+)[^/]+/courseware/[^/]+/[^/]+/.*$'
 
 class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
     """Capture last student acceptance for a given interval"""
