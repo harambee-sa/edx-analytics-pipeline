@@ -1,6 +1,7 @@
 """Measure student acceptance across (sub)sections in the course."""
 
 import re
+import logging
 import luigi
 
 from edx.analytics.tasks.mapreduce import MapReduceJobTask, MapReduceJobTaskMixin
@@ -8,6 +9,8 @@ from edx.analytics.tasks.pathutil import EventLogSelectionMixin, EventLogSelecti
 from edx.analytics.tasks.util.hive import HivePartition, HiveTableTask
 from edx.analytics.tasks.url import get_target_from_url
 from edx.analytics.tasks.util import eventlog
+
+log = logging.getLogger(__name__)
 
 SUBSECTION_PATTERN = r'/courses/[^/+]+(/|\+)[^/+]+(/|\+)[^/]+/courseware/[^/]+/[^/]+/.*$'
 
@@ -23,24 +26,30 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
 
         event_type = event.get('event_type')
         if event_type is None:
+            log.error("encountered event with no event_type: %s", event)
             return
 
         course_id = eventlog.get_course_id(event)
         if not course_id:
+            log.error("encountered event with no course_id: %s", event)
             return
 
         event_data = eventlog.get_event_data(event)
         if event_data is None:
+            log.error("encountered event with no event_data: %s", event)
             return
 
         encoded_module_id = event_data.get('id')
         if encoded_module_id is None:
+            log.error("encountered event with no encoded_module_id: %s", event)
             return
 
         if event_type[:9] == '/courses/' and re.match(SUBSECTION_PATTERN, event_type):
             event_type = 'subsection_viewed'
         else:
             return
+
+        log.info("yielding event for: %s", encoded_module_id)
 
         yield ((course_id, encoded_module_id), (date_string))
 
