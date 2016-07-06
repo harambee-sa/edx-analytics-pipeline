@@ -52,10 +52,10 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
 
     def reducer(self, key, events):
         """Calculate counts for events corresponding to course and (sub)section in a given time period."""
-        course_id, path = key
-        num_views = len(events)
-
         log.info("yielding reduced record for events: %s", events)
+
+        course_id, path = key
+        num_views = len(list(events))
 
         yield (
             # Output to be read by Hive must be encoded as UTF-8.
