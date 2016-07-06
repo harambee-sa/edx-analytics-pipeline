@@ -79,7 +79,7 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
         return get_target_from_url(self.output_root)
 
 
-class StudentAcceptanceTask(WarehouseMixin, EventLogSelectionDownstreamMixin, MapReduceJobTaskMixin, HiveTableTask):
+class StudentAcceptanceTask(EventLogSelectionDownstreamMixin, MapReduceJobTaskMixin, HiveTableTask):
     """Hive table that stores the count of subsection views in each course over time."""
 
     @property
