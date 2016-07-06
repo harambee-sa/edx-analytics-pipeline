@@ -16,6 +16,7 @@ SUBSECTION_PATTERN = r'/courses/[^/+]+(/|\+)[^/+]+(/|\+)[^/]+/courseware/[^/]+/[
 
 class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
     """Capture last student acceptance for a given interval"""
+
     output_root = luigi.Parameter()
 
     def mapper(self, line):
@@ -28,7 +29,9 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
         if event_type is None:
             return
 
+        path = ''
         if event_type[:9] == '/courses/' and re.match(SUBSECTION_PATTERN, event_type):
+            path = event_type
             event_type = 'page_view'
         else:
             return
@@ -37,30 +40,34 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
         if not course_id:
             return
 
-        event_context = event.get('context')
-        if event_context is None:
-            return
+        # event_context = event.get('context')
+        # if event_context is None:
+        #     return
 
-        path = event_context.get('path', None)
-        if path is None:
-            log.error("encountered page_view event with no path: %s", event)
-            return
+        # path = event_context.get('path', None)
+        # if path is None:
+        #     log.error("encountered page_view event with no path: %s", event)
+        #     return
 
-        log.info("yielding mapped record for: %s", event)
+        # /courses/course-v1:RAP+RA001+2016/courseware/a314922c8770494789e139e7e63e7aa2/96f9add9dd7546a79f801ecf79fc1798/
 
-        yield ((course_id, path), (date_string))
+        _, _, _, section, subsection = path.split('/')
+
+        # log.info("yielding mapped record for: %s", event)
+
+        yield ((course_id, section, subsection), (date_string))
 
     def reducer(self, key, events):
         """Calculate counts for events corresponding to course and (sub)section in a given time period."""
-        log.info("yielding reduced record for events: %s", events)
 
-        course_id, path = key
+        course_id, section, subsection = key
         num_views = len(list(events))
 
         yield (
             # Output to be read by Hive must be encoded as UTF-8.
             course_id.encode('utf-8'),
-            path.encode('utf8'),
+            section.encode('utf8'),
+            subsection.encode('utf8'),
             num_views
         )
 
@@ -79,7 +86,8 @@ class StudentAcceptanceTask(EventLogSelectionDownstreamMixin, MapReduceJobTaskMi
     def columns(self):
         return [
             ('course_id', 'STRING'),
-            ('path', 'STRING'),
+            ('section', 'STRING'),
+            ('subsection', 'STRING'),
             ('num_views', 'INT')
         ]
 
