@@ -46,7 +46,7 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
             log.error("encountered page_view event with no path: %s", event)
             return
 
-        log.info("yielding mapped record for: %s", path)
+        log.info("yielding mapped record for: %s", event)
 
         yield ((course_id, path), (date_string))
 
