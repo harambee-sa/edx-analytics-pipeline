@@ -12,7 +12,7 @@ from edx.analytics.tasks.util import eventlog
 
 log = logging.getLogger(__name__)
 
-SUBSECTION_PATTERN = r'/courses/[^/+]+(/|\+)[^/+]+(/|\+)[^/]+/courseware/[^/]+/[^/]+/.*$'
+SUBSECTION_PATTERN = r'/courses/[^/+]+(/|\+)[^/+]+(/|\+)[^/]+/courseware$'
 
 class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
     """Capture last student acceptance for a given interval"""
@@ -26,42 +26,41 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
 
         event_type = event.get('event_type')
         if event_type is None:
-            log.error("encountered event with no event_type: %s", event)
+            return
+
+        if event_type[:9] == '/courses/' and re.match(SUBSECTION_PATTERN, event_type):
+            event_type = 'page_view'
+        else:
             return
 
         course_id = eventlog.get_course_id(event)
         if not course_id:
-            log.error("encountered event with no course_id: %s", event)
             return
 
-        event_data = eventlog.get_event_data(event)
-        if event_data is None:
-            log.error("encountered event with no event_data: %s", event)
+        event_context = event.get('context')
+        if event_context is None:
             return
 
-        encoded_module_id = event_data.get('id')
-        if encoded_module_id is None:
-            log.error("encountered event with no encoded_module_id: %s", event)
+        path = event_context.get('path', None)
+        if path is None:
+            log.error("encountered page_view event with no path: %s", event)
             return
 
-        if event_type[:9] == '/courses/' and re.match(SUBSECTION_PATTERN, event_type):
-            event_type = 'subsection_viewed'
-        else:
-            return
+        log.info("yielding mapped record for: %s", path)
 
-        log.info("yielding event for: %s", encoded_module_id)
-
-        yield ((course_id, encoded_module_id), (date_string))
+        yield ((course_id, path), (date_string))
 
     def reducer(self, key, events):
         """Calculate counts for events corresponding to course and (sub)section in a given time period."""
-        course_id, encoded_module_id = key
+        course_id, path = key
         num_views = len(events)
+
+        log.info("yielding reduced record for events: %s", events)
 
         yield (
             # Output to be read by Hive must be encoded as UTF-8.
             course_id.encode('utf-8'),
-            encoded_module_id.encode('utf8'),
+            path.encode('utf8'),
             num_views
         )
 
@@ -80,7 +79,6 @@ class StudentAcceptanceTask(EventLogSelectionDownstreamMixin, MapReduceJobTaskMi
     def columns(self):
         return [
             ('course_id', 'STRING'),
-            ('encoded_module_id', 'STRING'),
             ('path', 'STRING'),
             ('num_views', 'INT')
         ]
