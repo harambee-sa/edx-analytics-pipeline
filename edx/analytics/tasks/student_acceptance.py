@@ -11,10 +11,7 @@ from edx.analytics.tasks.util import eventlog
 SUBSECTION_PATTERN = r'/courses/[^/+]+(/|\+)[^/+]+(/|\+)[^/]+/courseware/[^/]+/[^/]+/.*$'
 
 class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
-    """
-    Capture last student acceptance for a given interval
-    """
-
+    """Capture last student acceptance for a given interval"""
     output_root = luigi.Parameter()
 
     def mapper(self, line):
@@ -22,6 +19,10 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
         if value is None:
             return
         event, date_string = value
+
+        username = event.get('username', '').strip()
+        if not username:
+            return
 
         event_type = event.get('event_type')
         if event_type is None:
@@ -49,11 +50,11 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
         else:
           return
 
-        yield ((course_id, encoded_module_id), (path, date_string))
+        yield ((course_id, username, encoded_module_id), (path, date_string))
 
     def reducer(self, key, events):
         """Calculate counts for events corresponding to course and (sub)section in a given time period."""
-        course_id, encoded_module_id = key
+        course_id, username, encoded_module_id = key
 
         sort_key = itemgetter(0)
         sorted_events = sorted(events, key=sort_key)
@@ -61,17 +62,14 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
             return
 
         num_views = 0
-        path = ''
         for _entity_id, events in groupby(sorted_events, key=sort_key):
-            for path_string, date_string in events:
-                path = path_string;
+            for _, date_string in events:
                 num_views += 1
 
         yield (
             # Output to be read by Hive must be encoded as UTF-8.
             course_id.encode('utf-8'),
             encoded_module_id.encode('utf8'),
-            path.encode('utf8'),
             num_views
         )
 
