@@ -55,7 +55,7 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
     def reducer(self, key, events):
         """Calculate counts for events corresponding to course and (sub)section in a given time period."""
 
-        course_id, section, subsection, unit = key
+        course_id, section, subsection, unit, username = key
         num_views = len(list(events))
 
         yield (
