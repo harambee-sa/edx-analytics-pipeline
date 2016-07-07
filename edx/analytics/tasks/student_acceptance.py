@@ -16,11 +16,13 @@ log = logging.getLogger(__name__)
 SUBSECTION_PATTERN = r'/courses/[^/+]+(/|\+)[^/+]+(/|\+)[^/]+/courseware/[^/]+/[^/]+/.*$'
 
 class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
-    """Capture last student acceptance for a given interval"""
+    """Capture student acceptance data for a given interval"""
 
     output_root = luigi.Parameter()
 
     def mapper(self, line):
+        """Retrieve all courseware view events"""
+
         value = self.get_event_and_date_string(line)
         if not value:
             return
@@ -34,7 +36,7 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
         if not course_id:
             return
 
-        username = event.get('username')
+        username = eventlog.get_event_username(event)
         if not username:
             return
 
@@ -51,10 +53,12 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
         breadcrumbs = path.strip('/').strip().split('/')
         unit = ((breadcrumbs[5] or '0') if len(breadcrumbs) == 6 else '0')
 
+        log.info('YIELDING USER: %s', username);
+
         yield ((course_id, breadcrumbs[3], breadcrumbs[4], unit, username), (date_string))
 
     def reducer(self, key, events):
-        """Calculate counts for events corresponding to course and (sub)section in a given time period."""
+        """Calculate views for course, section and user."""
 
         course_id, section, subsection, unit, username = key
         num_views = len(list(events))
@@ -107,7 +111,7 @@ class StudentAcceptanceTableTask(EventLogSelectionDownstreamMixin, MapReduceJobT
 
 
 class StudentAcceptanceTask(HiveQueryToMysqlTask):
-    """Calculate unique vs total views and insert into MySQL."""
+    """Calculate unique vs total views and insert into reports database."""
 
     interval = luigi.DateIntervalParameter(
         description='The range of dates to import logs for.',
@@ -138,7 +142,7 @@ class StudentAcceptanceTask(HiveQueryToMysqlTask):
     @property
     def query(self):
         return """
-            SELECT course_id, section, subsection, unit, COUNT(*) AS num_unique_views, SUM(num_views)
+            SELECT course_id, section, subsection, unit, COUNT(id) AS num_unique_views, SUM(num_views)
             FROM student_acceptance GROUP BY course_id, section, subsection, unit
         """
 
