@@ -118,10 +118,10 @@ class StudentAcceptanceTask(HiveQueryToMysqlTask):
         return 'student_acceptance'
 
     columns = [
-        ('course_id', 'STRING'),
-        ('section', 'STRING'),
-        ('subsection', 'STRING'),
-        ('unit', 'STRING'),
+        ('course_id', 'VARCHAR'),
+        ('section', 'VARCHAR'),
+        ('subsection', 'VARCHAR'),
+        ('unit', 'VARCHAR'),
         ('num_unique_views', 'INT'),
         ('num_views', 'INT')
     ]
