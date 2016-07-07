@@ -6,7 +6,7 @@ import luigi
 
 from edx.analytics.tasks.mapreduce import MapReduceJobTask, MapReduceJobTaskMixin
 from edx.analytics.tasks.pathutil import EventLogSelectionMixin, EventLogSelectionDownstreamMixin
-from edx.analytics.tasks.util.hive import HivePartition, HiveTableTask
+from edx.analytics.tasks.util.hive import HivePartition, HiveTableTask, HiveQueryToMysqlTask
 from edx.analytics.tasks.url import get_target_from_url
 from edx.analytics.tasks.util import eventlog
 
