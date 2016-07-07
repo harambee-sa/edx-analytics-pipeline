@@ -146,11 +146,5 @@ class StudentAcceptanceTask(HiveQueryToMysqlTask):
         """
 
     @property
-    def indexes(self):
-        return [
-            ('course_id'),
-        ]
-
-    @property
     def partition(self):
         return HivePartition('dt', self.interval.date_b.isoformat())  # pylint: disable=no-member
