@@ -106,7 +106,12 @@ class StudentAcceptanceTableTask(EventLogSelectionDownstreamMixin, MapReduceJobT
 
 
 class StudentAcceptanceTask(HiveQueryToMysqlTask):
-    """Hive table that stores the count of subsection views in each course over time."""
+    """Calculate unique vs total views and insert into MySQL."""
+
+    interval = luigi.DateIntervalParameter(
+        default=None,
+        description='The range of dates to import logs for.'
+    )
 
     @property
     def table(self):
