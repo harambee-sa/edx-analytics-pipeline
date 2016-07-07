@@ -109,8 +109,8 @@ class StudentAcceptanceTask(HiveQueryToMysqlTask):
     """Calculate unique vs total views and insert into MySQL."""
 
     interval = luigi.DateIntervalParameter(
-        default=None,
-        description='The range of dates to import logs for.'
+        description='The range of dates to import logs for.',
+        default=None
     )
 
     @property
@@ -146,11 +146,7 @@ class StudentAcceptanceTask(HiveQueryToMysqlTask):
     @property
     def required_table_tasks(self):
         return StudentAcceptanceTableTask(
-            mapreduce_engine=self.mapreduce_engine,
-            n_reduce_tasks=self.n_reduce_tasks,
-            source=self.source,
-            interval=self.interval,
-            pattern=self.pattern
+            interval=self.interval
         )
 
     @property
