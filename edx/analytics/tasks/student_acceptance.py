@@ -152,14 +152,7 @@ class StudentAcceptanceTask(HiveQueryToMysqlTask):
 
     @property
     def query(self):
-        return """
-            SELECT course_id, section, subsection, unit, COUNT(*) AS num_unique_views, SUM(num_views)
-            FROM student_acceptance
-            WHERE end_date >= '{start_date}' AND end_date < '{end_date}'
-        """.format(
-            start_date=self.interval.date_a.isoformat(),
-            end_date=self.interval.date_b.isoformat(),
-        )
+        return "SELECT course_id, section, subsection, unit, COUNT(*) AS num_unique_views, SUM(num_views) FROM student_acceptance"
 
     @property
     def partition(self):
