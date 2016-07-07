@@ -53,8 +53,6 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
         breadcrumbs = path.strip('/').strip().split('/')
         unit = ((breadcrumbs[5] or '0') if len(breadcrumbs) == 6 else '0')
 
-        log.info('YIELDING USER: %s', username);
-
         yield ((course_id, breadcrumbs[3], breadcrumbs[4], unit, username), (date_string))
 
     def reducer(self, key, events):
@@ -62,6 +60,8 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
 
         course_id, section, subsection, unit, username = key
         num_views = len(list(events))
+
+        log.info('REDUCING FOR USER: %s', username);
 
         yield (
             # Output to be read by Hive must be encoded as UTF-8.
@@ -142,7 +142,7 @@ class StudentAcceptanceTask(HiveQueryToMysqlTask):
     @property
     def query(self):
         return """
-            SELECT course_id, section, subsection, unit, COUNT(id) AS num_unique_views, SUM(num_views)
+            SELECT course_id, section, subsection, unit, COUNT(*) AS num_unique_views, SUM(num_views)
             FROM student_acceptance GROUP BY course_id, section, subsection, unit
         """
 
