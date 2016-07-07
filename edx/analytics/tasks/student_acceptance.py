@@ -152,7 +152,10 @@ class StudentAcceptanceTask(HiveQueryToMysqlTask):
 
     @property
     def query(self):
-        return "SELECT course_id, section, subsection, unit, COUNT(*) AS num_unique_views, SUM(num_views) FROM student_acceptance"
+        return """
+            SELECT course_id, section, subsection, unit, COUNT(*) AS num_unique_views, SUM(num_views)
+            FROM student_acceptance GROUP BY course_id, section, subsection, unit
+        """
 
     @property
     def partition(self):
