@@ -85,7 +85,7 @@ class StudentAcceptanceTask(EventLogSelectionDownstreamMixin, MapReduceJobTaskMi
             ('course_id', 'STRING'),
             ('section', 'STRING'),
             ('subsection', 'STRING'),
-            ('unit', 'INT')
+            ('unit', 'INT'),
             ('num_views', 'INT')
         ]
 
