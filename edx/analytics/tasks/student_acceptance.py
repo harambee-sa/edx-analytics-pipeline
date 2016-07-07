@@ -12,6 +12,7 @@ from edx.analytics.tasks.util import eventlog
 
 log = logging.getLogger(__name__)
 
+# /courses/course-v1:RAP+RA001+2016/courseware/a314922c8770494789e139e7e63e7aa2/96f9add9dd7546a79f801ecf79fc1798/
 SUBSECTION_PATTERN = r'/courses/[^/+]+(/|\+)[^/+]+(/|\+)[^/]+/courseware/[^/]+/[^/]+/.*$'
 
 class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
@@ -25,19 +26,18 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
             return
         event, date_string = value
 
+        course_id = eventlog.get_course_id(event)
+        if not course_id:
+            return
+
         event_type = event.get('event_type')
         if event_type is None:
             return
 
-        path = ''
+        path = event_type
         if event_type[:9] == '/courses/' and re.match(SUBSECTION_PATTERN, event_type):
-            path = event_type
             event_type = 'page_view'
         else:
-            return
-
-        course_id = eventlog.get_course_id(event)
-        if not course_id:
             return
 
         # event_context = event.get('context')
@@ -49,11 +49,7 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
         #     log.error("encountered page_view event with no path: %s", event)
         #     return
 
-        # /courses/course-v1:RAP+RA001+2016/courseware/a314922c8770494789e139e7e63e7aa2/96f9add9dd7546a79f801ecf79fc1798/
-
-        _, _, _, section, subsection = path.split('/')
-
-        # log.info("yielding mapped record for: %s", event)
+        _, _, _, section, subsection = path.strip('/').split('/')
 
         yield ((course_id, section, subsection), (date_string))
 
