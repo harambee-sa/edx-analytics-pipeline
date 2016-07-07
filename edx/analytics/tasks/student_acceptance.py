@@ -61,8 +61,6 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
         course_id, section, subsection, unit, username = key
         num_views = len(list(events))
 
-        log.info('REDUCING FOR USER: %s', username);
-
         yield (
             # Output to be read by Hive must be encoded as UTF-8.
             course_id.encode('utf8'),
@@ -82,7 +80,7 @@ class StudentAcceptanceTableTask(EventLogSelectionDownstreamMixin, MapReduceJobT
 
     @property
     def table(self):
-        return 'student_acceptance'
+        return 'student_acceptance_views'
 
     @property
     def columns(self):
