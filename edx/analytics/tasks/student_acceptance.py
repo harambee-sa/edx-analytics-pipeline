@@ -50,7 +50,7 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
 
         breadcrumbs = path.strip('/').split('/')
 
-        yield ((course_id, breadcrumbs[3], breadcrumbs[4], (breadcrumbs[5] if breadcrumbs[5] else 0), username), (date_string))
+        yield ((course_id, breadcrumbs[3], breadcrumbs[4], (int(breadcrumbs[5] or 0) if len(breadcrumbs) == 6 else 0), username), (date_string))
 
     def reducer(self, key, events):
         """Calculate counts for events corresponding to course and (sub)section in a given time period."""
