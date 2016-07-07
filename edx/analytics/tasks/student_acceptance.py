@@ -34,7 +34,7 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
         if not course_id:
             return
 
-        username = event.get('username').strip()
+        username = event.get('username')
         if not username:
             return
 
@@ -61,7 +61,7 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
 
         yield (
             # Output to be read by Hive must be encoded as UTF-8.
-            course_id.encode('utf-8'),
+            course_id.encode('utf8'),
             section.encode('utf8'),
             subsection.encode('utf8'),
             unit.encode('utf8'),
@@ -126,23 +126,6 @@ class StudentAcceptanceTask(HiveQueryToMysqlTask):
         ('num_unique_views', 'INT'),
         ('num_views', 'INT')
     ]
-
-    @property
-    def auto_primary_key(self):
-        # Instead of using an auto incrementing primary key, we define a custom compound primary key. See keys() defined
-        # below. This vastly improves the performance of our most common query pattern.
-        return None
-
-    @property
-    def keys(self):
-        """
-        Combine mulitple fields that must be unique together as the primary key for this table.
-        This dramatically speeds up access times at the cost of write speed.
-        """
-        # max length for this key must be under 3072 bytes; see comment in module_engagement.py
-        return [
-            ('PRIMARY KEY', ['course_id', 'section', 'subsection', 'unit'])
-        ]
 
     @property
     def required_table_tasks(self):
