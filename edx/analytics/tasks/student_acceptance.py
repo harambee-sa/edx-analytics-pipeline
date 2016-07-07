@@ -22,7 +22,7 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
 
     def mapper(self, line):
         value = self.get_event_and_date_string(line)
-        if value is None:
+        if not value:
             return
         event, date_string = value
 
@@ -39,7 +39,7 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
             return
 
         event_type = event.get('event_type')
-        if event_type is None:
+        if not event_type:
             return
 
         path = event_type
@@ -118,14 +118,16 @@ class StudentAcceptanceTask(HiveQueryToMysqlTask):
     def table(self):
         return 'student_acceptance'
 
-    columns = [
-        ('course_id', 'VARCHAR'),
-        ('section', 'VARCHAR'),
-        ('subsection', 'VARCHAR'),
-        ('unit', 'VARCHAR'),
-        ('num_unique_views', 'INT'),
-        ('num_views', 'INT')
-    ]
+    @property
+    def columns(self):
+        return [
+            ('course_id', 'VARCHAR(255) NOT NULL'),
+            ('section', 'VARCHAR(255) NOT NULL'),
+            ('subsection', 'VARCHAR(255) NOT NULL'),
+            ('unit', 'VARCHAR(255) NOT NULL'),
+            ('num_unique_views', 'INTEGER'),
+            ('num_views', 'INTEGER')
+        ]
 
     @property
     def required_table_tasks(self):
