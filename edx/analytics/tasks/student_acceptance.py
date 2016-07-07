@@ -49,14 +49,14 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
         #     log.error("encountered page_view event with no path: %s", event)
         #     return
 
-        _, _, _, section, subsection = path.strip('/').split('/')
+        breadcrumbs = path.strip('/').split('/')
 
-        yield ((course_id, section, subsection), (date_string))
+        yield ((course_id, breadcrumbs[3], breadcrumbs[4], (breadcrumbs[5] if len(breadcrumbs) == 6 else 0)), (date_string))
 
     def reducer(self, key, events):
         """Calculate counts for events corresponding to course and (sub)section in a given time period."""
 
-        course_id, section, subsection = key
+        course_id, section, subsection, unit = key
         num_views = len(list(events))
 
         yield (
@@ -64,6 +64,7 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
             course_id.encode('utf-8'),
             section.encode('utf8'),
             subsection.encode('utf8'),
+            unit,
             num_views
         )
 
@@ -84,6 +85,7 @@ class StudentAcceptanceTask(EventLogSelectionDownstreamMixin, MapReduceJobTaskMi
             ('course_id', 'STRING'),
             ('section', 'STRING'),
             ('subsection', 'STRING'),
+            ('unit', 'INT')
             ('num_views', 'INT')
         ]
 
