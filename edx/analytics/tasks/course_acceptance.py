@@ -1,4 +1,4 @@
-"""Measure student acceptance across (sub)sections in the course."""
+"""Measure course acceptance across (sub)sections in the course."""
 
 import re
 import logging
@@ -15,8 +15,8 @@ log = logging.getLogger(__name__)
 # /courses/course-v1:RAP+RA001+2016/courseware/a314922c8770494789e139e7e63e7aa2/96f9add9dd7546a79f801ecf79fc1798/
 SUBSECTION_PATTERN = r'/courses/[^/+]+(/|\+)[^/+]+(/|\+)[^/]+/courseware/[^/]+/[^/]+/.*$'
 
-class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
-    """Capture student acceptance data for a given interval"""
+class CourseAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
+    """Capture course acceptance data for a given interval"""
 
     output_root = luigi.Parameter()
 
@@ -75,12 +75,12 @@ class StudentAcceptanceDataTask(EventLogSelectionMixin, MapReduceJobTask):
         return get_target_from_url(self.output_root)
 
 
-class StudentAcceptanceTableTask(EventLogSelectionDownstreamMixin, MapReduceJobTaskMixin, HiveTableTask):
+class CourseAcceptanceTableTask(EventLogSelectionDownstreamMixin, MapReduceJobTaskMixin, HiveTableTask):
     """Hive table that stores the count of subsection views in each course over time."""
 
     @property
     def table(self):
-        return 'student_acceptance_views'
+        return 'course_acceptance_views'
 
     @property
     def columns(self):
@@ -98,7 +98,7 @@ class StudentAcceptanceTableTask(EventLogSelectionDownstreamMixin, MapReduceJobT
         return HivePartition('dt', self.interval.date_b.isoformat())  # pylint: disable=no-member
 
     def requires(self):
-        return StudentAcceptanceDataTask(
+        return CourseAcceptanceDataTask(
             mapreduce_engine=self.mapreduce_engine,
             n_reduce_tasks=self.n_reduce_tasks,
             source=self.source,
@@ -108,7 +108,7 @@ class StudentAcceptanceTableTask(EventLogSelectionDownstreamMixin, MapReduceJobT
         )
 
 
-class StudentAcceptanceTask(HiveQueryToMysqlTask):
+class CourseAcceptanceTask(HiveQueryToMysqlTask):
     """Calculate unique vs total views and insert into reports database."""
 
     interval = luigi.DateIntervalParameter(
@@ -118,7 +118,7 @@ class StudentAcceptanceTask(HiveQueryToMysqlTask):
 
     @property
     def table(self):
-        return 'student_acceptance'
+        return 'course_acceptance'
 
     @property
     def columns(self):
@@ -133,7 +133,7 @@ class StudentAcceptanceTask(HiveQueryToMysqlTask):
 
     @property
     def required_table_tasks(self):
-        return StudentAcceptanceTableTask(
+        return CourseAcceptanceTableTask(
             interval=self.interval
         )
 
@@ -141,7 +141,7 @@ class StudentAcceptanceTask(HiveQueryToMysqlTask):
     def query(self):
         return """
             SELECT course_id, section, subsection, unit, COUNT(*) AS num_unique_views, SUM(num_views)
-            FROM student_acceptance_views
+            FROM course_acceptance_views
             GROUP BY course_id, section, subsection, unit
         """
 
